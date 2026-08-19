@@ -1,9 +1,10 @@
-Complete Server Installation Guide (AlumniNetwork)
+# Complete Server Installation Guide (AlumniNetwork)
+
 Project URL: https://alumna.ucsh.edu.mm/
 Repository: https://github.com/AungPyaeSoneUCS/AlumniNetworkUCS
 Environment: Ubuntu Linux Virtual Machine
 
-Step 1: Server Preparation
+# Step 1: Server Preparation
 Ensure your Ubuntu Virtual Machine has all the foundational packages required for a modern Node.js application.
 1. Update the system and install core utilities:
 sudo apt update && sudo apt upgrade -y
@@ -16,14 +17,14 @@ sudo npm install -g pm2
 
 
  
-Step 2: Database Setup (MongoDB via Docker)
+# Step 2: Database Setup (MongoDB via Docker)
 Virtual Machine hypervisors often do not pass through AVX CPU instructions, causing standard native installations of MongoDB 5.0+ to crash immediately. Deploying MongoDB 4.4 using Docker is the most stable workaround for a VM environment.
 1. Enable and start the Docker service:
 sudo systemctl enable --now docker
 2. Deploy the MongoDB Container: This command downloads and runs MongoDB on the standard port (27017) and ensures it automatically restarts if the server reboots.
 sudo docker run --name local-mongo -d -p 27017:27017 --restart always mongo:4.4
  
-Step 3: Application Deployment
+# Step 3: Application Deployment
 1. Clone the Repository:
 cd ~
 git clone https://github.com/AungPyaeSoneUCS/AlumniNetworkUCS.git
@@ -35,15 +36,16 @@ nano .env
 Ensure your database string points to the local Docker container:
 Code snippet
 MONGODB_URI="mongodb://127.0.0.1:27017/AlumniNetworkDB"
-# Include your NEXTAUTH_SECRET, NEXTAUTH_URL, and other necessary variables here.
+Include your NEXTAUTH_SECRET, NEXTAUTH_URL, and other necessary variables here.
 (Save and exit nano: Ctrl+O, Enter, Ctrl+X)
  
-Step 4: Folder Permissions
+# Step 4: Folder Permissions
 For user uploads (like profile pictures or logos) to work correctly, the web server needs explicit read and write access to your public directory.
 Run this command from inside your project folder:
 sudo chmod -R 777 public/
 (Note: If you ever delete and recreate the public folder, you must run this command again).
-Step 5: Process Management (PM2)
+
+# Step 5: Process Management (PM2)
 To avoid "ghost processes" and EADDRINUSE port 3000 conflicts, it is best to run the Next.js binary directly rather than wrapping it in an npm script.
 1. Build the production application:
 npm run build
@@ -53,7 +55,7 @@ pm2 start ./node_modules/next/dist/bin/next --name "next-app" -- start
 pm2 save
 pm2 startup
  
-Step 6: Web Server & Reverse Proxy (NGINX)
+# Step 6: Web Server & Reverse Proxy (NGINX)
 Configure NGINX to handle web traffic securely and serve uploaded files directly from the disk to prevent Next.js caching issues.
 1. Create the NGINX Configuration:
 sudo nano /etc/nginx/sites-available/alumna.ucsh.edu.mm
@@ -96,18 +98,23 @@ server {
 sudo ln -s /etc/nginx/sites-available/alumna.ucsh.edu.mm /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl restart nginx
-Step 7: Standard Update Workflow
+
+# Step 7: Standard Update Workflow
 Whenever new code is merged into the GitHub repository, follow this workflow to update the live server cleanly and prevent cache conflicts.
+
 1. Navigate to the project directory:
 cd ~/AlumniNetworkUCS
-2. Pull the latest code:
+
+3. Pull the latest code:
 git pull origin main
 Troubleshooting: If you receive an error about local files being overwritten (e.g., a modified logo.png), force the update to mirror GitHub exactly by running:
 git fetch --all
 git reset --hard origin/main
-3. Clean the cache and rebuild:
+
+5. Clean the cache and rebuild:
 rm -rf .next
 npm run build
-4. Restart the application:
+
+7. Restart the application:
 pm2 restart next-app
 
